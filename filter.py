@@ -7,29 +7,28 @@ from pyspark.sql.functions import col
 def filter_clients(personal_data_path, financial_data_path, countries_of_interest):
     spark = SparkSession.builder.getOrCreate()
     spark_context = spark.sparkContext
-    spark_context.setLogLevel("ERROR")
 
     log4jLogger = spark_context._jvm.org.apache.log4j
     LOGGER = log4jLogger.LogManager.getLogger(__name__)
     
-    LOGGER.info("Transforming personal data")
+    LOGGER.warn("Transforming personal data")
     personalDF = spark.read.csv(personal_data_path, header=True)
     countries_of_interest = set(countries_of_interest)
     personalDF = personalDF.where(col('country').isin(countries_of_interest))
     personalDF = personalDF.select("id", "email")
     
-    LOGGER.info("Transforming financial data")
+    LOGGER.warn("Transforming financial data")
     financialDF = spark.read.csv(financial_data_path, header=True)
     financialDF = financialDF.select("id", "btc_a", "cc_t")
 
-    LOGGER.info("Join personal and financial data")
+    LOGGER.warn("Join personal and financial data")
     emails_and_details = personalDF.join(financialDF, on='id')
     LOGGER.info("Rename result columns")
     emails_and_details = emails_and_details.\
         withColumnRenamed('id', 'client_identifier').\
         withColumnRenamed('btc_a', 'bitcoin_address').\
         withColumnRenamed('cc_t', 'credit_card_type')
-    LOGGER.info("Writing results")
+    LOGGER.warn("Writing results")
     emails_and_details.write.option("header", True).csv('client_data')
 
 
